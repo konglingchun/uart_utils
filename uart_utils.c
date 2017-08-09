@@ -339,7 +339,7 @@ int uart_init(char *devname,
 
 	uart_fd = uart_open(devname);
 	tcgetattr(uart_fd, &option_old);	//保存串口属性
-	options = uart_set_attr(uart_fd, 9600, 8, 1, 'N', 0, NULL);
+	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, NULL);
 
 	/****************读取字符最小个数为1****************/
 	options->c_cc[VMIN] = 1;
