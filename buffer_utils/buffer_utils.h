@@ -3,6 +3,8 @@
 
 extern void print_buffer_hex(char *pre, char *buffer, int size);
 
+extern void print_buffer(char *pre, char *buffer, int size);
+
 extern void print_buffer_char(char *pre, char *buffer, int size);
 
 #endif
