@@ -383,44 +383,53 @@ void uart_send_str(int uart_fd, char *str)
 }
 
 /*************************************************************
-* 功能：	串口读一行字符串，在设定的时间内读不到数据则函数返回
+* 功能：	读一串至截止字符的字符串，在设定的时间内读不到数据则函数返回
 * 参数：	uart_fd：串口设备文件描述符
 			buffer：存放数据的内存的首地址
 			len：存放数据的内存空间的大小
+			until：截止字符
 			timeout_ms：超时时间(单位：ms)
 * 返回值：	
 			成功：实际读到的字符数
 			失败：-1
 **************************************************************/
-int uart_readline(int uart_fd, char *buffer, int len, int timeout_ms)
+int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms)
 {
 	char c = '\0';
 	fd_set fds;
 	struct timeval tv;
-	int i;
+	int i = -1;
 	int ret;
 
 	memset(buffer, 0, len);
-	for(i=0; i<len && c != '\n'; i++){
+	for(i=0; i<len; i++){
 		tv.tv_sec = 0;
 		tv.tv_usec = timeout_ms*1000;
 		FD_ZERO(&fds);
 		FD_SET(uart_fd, &fds);
 		ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
 		if(ret < 0){
-			perror("seclect");
+			printf("uart_read_until seclect error\n");
 			return -1;
 		}else if(ret > 0){
 			ret = read(uart_fd, &c, 1);
-			if(ret < 0)
-			{
-				perror("read");
+			if(ret < 0){
+				printf("uart_read_until read error\n");
+			}else{
+				buffer[i] = c;
+#if 0		
+				printf("i= %d\n", i);
+				printf("\t,[%#x], <%c>\n", c, c);
+#endif				
+				if(c == until){
+					i++;
+					break;
+				}
 			}
 		}else{
+			printf("read time out\n");
 			return -1;
 		}
-		*buffer++ = c;
-		//printf("c=%c\n", c);
 	}
 	return i;
 }

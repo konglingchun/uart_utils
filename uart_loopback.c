@@ -5,7 +5,7 @@
 #include "uart_utils.h"
 
 static int uart_fd = -1;
-#define LOOPBACK_TEST_BUFF "loopback test"
+#define LOOPBACK_TEST_BUFF "loopback test\n"
 
 int uart_loopback_test(char *file)
 {
@@ -14,14 +14,13 @@ int uart_loopback_test(char *file)
 	uart_fd = uart_init(file, 9600, 8, 1, 'E', 0);
 
 	write(uart_fd, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF));
-	sleep(1);
-	read(uart_fd, buffer, sizeof(buffer));
-	close(uart_fd);
+	uart_read_until(uart_fd, buffer, sizeof(buffer), '\n', 1000);
+	uart_uninit(uart_fd);
 	if(strncmp(buffer, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF)) == 0){
-		printf("uart %s loopback ok\n", file);
+		printf("%s loopback is ok\n", file);
 		return 0;
 	}
-	printf("uart %s loopback not ok\n", file);
+	printf("%s loopback is not ok\n", file);
 	return -1;
 }
 

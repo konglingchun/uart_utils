@@ -1,14 +1,11 @@
 #ifndef _UART_INIT_H_
 #define _UART_INIT_H_
 
-//#define SERIAL_DEV_NAME "/dev/ttymxc4"
-#define SERIAL_DEV_NAME "/dev/ttyUSB0"
-
 #include <termios.h>
 
-int uart_open(char *dev_name);
+extern int uart_open(char *dev_name);
 
-void uart_print_attr(struct termios *options);
+extern void uart_print_attr(struct termios *options);
 
 /*************************************************************
 * 功能：	设置串口属性结构体
@@ -21,7 +18,7 @@ void uart_print_attr(struct termios *options);
 			options：串口属结构体，
 * 返回值：	串口属性结构体
 **************************************************************/
-struct termios *uart_set_attr(int fd,
+extern struct termios *uart_set_attr(int fd,
 				int speed,
 				int data_bits,
 				int stop_bits,
@@ -35,7 +32,7 @@ struct termios *uart_set_attr(int fd,
 		echo：回显（0为关，1为开）
 * 返回值：	无
 **************************************************************/
-void uart_set_echo(int uart_fd, int echo);
+extern void uart_set_echo(int uart_fd, int echo);
 
 /*************************************************************
 * 功能：	设置阻塞
@@ -43,7 +40,7 @@ void uart_set_echo(int uart_fd, int echo);
 		block：阻塞（0为不阻塞，1为阻塞）
 * 返回值：	无
 **************************************************************/
-void uart_set_block(int uart_fd, int block);
+extern void uart_set_block(int uart_fd, int block);
 
 /*************************************************************
 * 功能：	串口初始化程序
@@ -55,7 +52,7 @@ void uart_set_block(int uart_fd, int block);
 		flow_ctrl：硬件流控制（0为OFF，1为ON）
 * 返回值：	串口设备文件描述符
 **************************************************************/
-int uart_init(char *devname,
+extern int uart_init(char *devname,
 			  	int speed,
 				int data_bits,
 				int stop_bits,
@@ -67,7 +64,7 @@ int uart_init(char *devname,
 * 参数：	串口设备文件描述符
 * 返回值：	无
 **************************************************************/
-void uart_uninit(int uart_fd);
+extern void uart_uninit(int uart_fd);
 
 /*************************************************************
 * 功能：	串口发送字符串
@@ -75,7 +72,7 @@ void uart_uninit(int uart_fd);
 			str：待发送的字符
 * 返回值：	无
 **************************************************************/
-void uart_send_str(int uart_fd, char *str);
+extern void uart_send_str(int uart_fd, char *str);
 
 /*************************************************************
 * 功能：	串口读一行字符串，在设定的时间内读不到数据则函数返回
@@ -87,7 +84,7 @@ void uart_send_str(int uart_fd, char *str);
 			成功：实际读到的字符数
 			失败：-1
 **************************************************************/
-int uart_readline(int uart_fd, char *buffer, int len, int timeout_ms);
+extern int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms);
 
 
 #endif
