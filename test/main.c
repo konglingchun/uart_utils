@@ -4,15 +4,8 @@
 
 #include "uart_utils.h"
 #include "uart_loopback.h"
+#include "buffer_utils.h"
 
-void print_buffer(char *pre, char *buffer, int size)
-{
-	int i;
-	
-	for(i=0;i<size;i++) {
-		printf("%#02hhx\n", buffer[i]);
-	}
-}
 
 int main(int argc, char *argv[])
 {
@@ -27,7 +20,7 @@ int main(int argc, char *argv[])
 		if(receive_length < 0) {
 			perror("read");
 		} else if(receive_length > 0){
-			print_buffer("", receive_buffer, receive_length);
+			print_buffer_hex("", receive_buffer, receive_length);
 		}
 	}
     return 0;
