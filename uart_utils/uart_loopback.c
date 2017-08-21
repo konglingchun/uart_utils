@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "uart_utils.h"
+#include "debug_print.h"
 
 static int uart_fd = -1;
 #define LOOPBACK_TEST_BUFF "loopback test\n"
@@ -10,17 +11,16 @@ static int uart_fd = -1;
 int uart_loopback_test(char *file)
 {
 	char buffer[20] = "";
-	
-	uart_fd = uart_init(file, 9600, 8, 1, 'E', 0);
 
+	uart_fd = uart_init(file, 9600, 8, 1, 'E', 0);
 	write(uart_fd, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF));
 	uart_read_until(uart_fd, buffer, sizeof(buffer), '\n', 1000);
 	uart_uninit(uart_fd);
 	if(strncmp(buffer, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF)) == 0){
-		printf("%s loopback is ok\n", file);
+		printd(INFO, "%s loopback is ok\n", file);
 		return 0;
 	}
-	printf("%s loopback is not ok\n", file);
+	printd(INFO, "%s loopback is not ok\n", file);
 	return -1;
 }
 

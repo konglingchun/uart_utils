@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
 	int receive_length;
 	char receive_buffer[1024] = "";
 
-	uart_loopback_test("/dev/ttyUSB0");
 	uart_fd = uart_init("/dev/ttyUSB0", 9600, 8, 1, 'E', 0);
 	while(1){		
 		receive_length = read(uart_fd, receive_buffer, sizeof(receive_buffer));

@@ -8,6 +8,8 @@
 #include <string.h>
 #include <sys/select.h>
 
+#include "debug_print.h"
+
 static struct termios option_old;
 
 /*************************************************************
@@ -22,7 +24,7 @@ int uart_open(char *dev_name)
 	uart_fd = open(dev_name, O_RDWR);
 	if(uart_fd < 0)
 	{
-		perror("open_dev");
+		printd(ERROR, "uart_open\n");
 		_exit(-1);
 	}
 	return uart_fd;
@@ -30,11 +32,12 @@ int uart_open(char *dev_name)
 
 void uart_print_attr(struct termios *options)
 {
-	printf("c_iflag = %#x\n", options->c_iflag);
-	printf("c_oflag = %#x\n", options->c_oflag);
-	printf("c_cflag = %#x\n", options->c_cflag);
-	printf("c_lflag = %#x\n", options->c_lflag);
 	int i;
+	
+	printd(INFO, "c_iflag = %#x\n", options->c_iflag);
+	printd(INFO, "c_oflag = %#x\n", options->c_oflag);
+	printd(INFO, "c_cflag = %#x\n", options->c_cflag);
+	printd(INFO, "c_lflag = %#x\n", options->c_lflag);
 	for(i=VINTR;i<=VEOL2;i++)
 	{
 		printf("c_cc[%d] = %d\n", i, options->c_cc[i]);
@@ -53,7 +56,7 @@ static struct termios *uart_default_attr(void)
 	options = (struct termios *)calloc(1, sizeof(struct termios));
 	if(options == NULL)
 	{
-		perror("calloc");
+		printd(ERROR, "calloc");
 		_exit(-1);
 	}
 	/*
@@ -378,7 +381,7 @@ void uart_send_str(int uart_fd, char *str)
 	ret = write(uart_fd, str, strlen(str));
 	if(ret < 0)
 	{
-		perror("write");
+		printd(ERROR, "write");
 	}
 }
 
@@ -409,17 +412,17 @@ int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int
 		FD_SET(uart_fd, &fds);
 		ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
 		if(ret < 0){
-			printf("uart_read_until seclect error\n");
+			printd(ERROR, "uart_read_until seclect error\n");
 			return -1;
 		}else if(ret > 0){
 			ret = read(uart_fd, &c, 1);
 			if(ret < 0){
-				printf("uart_read_until read error\n");
+				printd(ERROR, "uart_read_until read error\n");
 			}else{
 				buffer[i] = c;
 #if 0		
-				printf("i= %d\n", i);
-				printf("\t,[%#x], <%c>\n", c, c);
+				printd(INFO, "i= %d\n", i);
+				printd(INFO, "\t,[%#x], <%c>\n", c, c);
 #endif				
 				if(c == until){
 					i++;
@@ -427,7 +430,7 @@ int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int
 				}
 			}
 		}else{
-			printf("read time out\n");
+			printd(ERROR, "read time out\n");
 			return -1;
 		}
 	}
