@@ -33,6 +33,14 @@ SET(SRC_DEMO_TEST
 	test/main.c
 )
 
+SET(SRC_QUEUE_TEST
+	${SRC_LIST_BASE}
+	test/buffer_queue_test.c
+)
+
 ADD_EXECUTABLE(demo ${SRC_DEMO_TEST})
 TARGET_LINK_LIBRARIES(demo pthread)
+
+ADD_EXECUTABLE(queue ${SRC_QUEUE_TEST})
+TARGET_LINK_LIBRARIES(queue pthread)
 
