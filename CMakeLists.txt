@@ -43,6 +43,11 @@ SET(SRC_QUEUE_TEST
 	test/queue.c
 )
 
+SET(SRC_RFID_TEST
+	${SRC_LIST_BASE}
+	test/queue.c
+)
+
 ADD_EXECUTABLE(main ${SRC_MAIN_TEST})
 TARGET_LINK_LIBRARIES(main pthread)
 
@@ -51,4 +56,7 @@ TARGET_LINK_LIBRARIES(tilt pthread)
 
 ADD_EXECUTABLE(queue ${SRC_QUEUE_TEST})
 TARGET_LINK_LIBRARIES(queue pthread)
+
+ADD_EXECUTABLE(rfid ${SRC_RFID_TEST})
+TARGET_LINK_LIBRARIES(rfid pthread)
 
