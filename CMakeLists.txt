@@ -45,7 +45,7 @@ SET(SRC_QUEUE_TEST
 
 SET(SRC_RFID_TEST
 	${SRC_LIST_BASE}
-	test/queue.c
+	test/rfid.c
 )
 
 ADD_EXECUTABLE(main ${SRC_MAIN_TEST})

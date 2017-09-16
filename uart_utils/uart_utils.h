@@ -85,6 +85,18 @@ extern void uart_send_str(int uart_fd, char *str);
 			成功：实际读到的字符数
 			失败：-1
 **************************************************************/
-extern int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms);
+extern int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms);
+
+/*************************************************************
+* 功能：	设定的时间内读取数据
+* 参数：	uart_fd：串口设备文件描述符
+			buffer：存放数据的内存的首地址
+			len：存放数据的内存空间的大小
+			timeout_ms：超时时间(单位：ms)
+* 返回值：	
+			成功：实际读到的字符数
+			失败：-1
+**************************************************************/
+extern int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, int timeout_interval);
 
 #endif

@@ -14,7 +14,7 @@ int uart_loopback_test(char *file)
 
 	uart_fd = uart_init(file, 9600, 8, 1, 'E', 0);
 	write(uart_fd, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF));
-	uart_read_until(uart_fd, buffer, sizeof(buffer), '\n', 1000);
+	uart_read_until_char(uart_fd, buffer, sizeof(buffer), '\n', 1000);
 	uart_uninit(uart_fd);
 	if(strncmp(buffer, LOOPBACK_TEST_BUFF, strlen(LOOPBACK_TEST_BUFF)) == 0){
 		printd(INFO, "%s loopback is ok\n", file);

@@ -10,15 +10,14 @@
 int main(int argc, char *argv[])
 {
 	int uart_fd;
-	int receive_length;
-	char receive_buffer[1024] = "";
+	char buffer[256] = "";
+	int ret;
 
-	uart_fd = uart_init("/dev/ttyUSB0", 9600, 8, 1, 'N', 0);
-	while(1){		
-		receive_length = uart_read_until(uart_fd, receive_buffer, sizeof(receive_buffer), '\n', 50);
-		if(receive_length > 0){
-			print_buffer("", receive_buffer, receive_length);
-			print_buffer_hex("", receive_buffer, receive_length);
+	uart_fd = uart_init("/dev/ttyUSB1", 38400, 8, 1, 'N', 0);
+	while(1){
+		ret = uart_read_until_time(uart_fd, buffer, sizeof(buffer), 500, 10);
+		if(ret > 0){
+			print_buffer_hex("receive monitor", buffer, ret);
 		}
 	}
     return 0;

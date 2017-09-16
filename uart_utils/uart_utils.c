@@ -396,9 +396,9 @@ void uart_send_str(int uart_fd, char *str)
 			成功：实际读到的字符数
 			失败：-1
 **************************************************************/
-int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms)
+int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until, int timeout_ms)
 {
-	char c = '\0';
+	unsigned char c = '\0';
 	fd_set fds;
 	struct timeval tv;
 	int i = -1;
@@ -432,6 +432,56 @@ int uart_read_until(int uart_fd, char *buffer, int len, unsigned char until, int
 		}else{
 			printd(ERROR, "read time out\n");
 			return -1;
+		}
+	}
+	return i;
+}
+
+/*************************************************************
+* 功能：	设定的时间内读取数据
+* 参数：	uart_fd：串口设备文件描述符
+			buffer：存放数据的内存的首地址
+			len：存放数据的内存空间的大小
+			timeout_ms：超时时间(单位：ms)
+* 返回值：	
+			成功：实际读到的字符数
+			失败：-1
+**************************************************************/
+int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, int timeout_interval)
+{
+	unsigned char c = '\0';
+	fd_set fds;
+	struct timeval tv;
+
+	int i = -1;
+	int ret;
+
+	memset(buffer, 0, len);
+	tv.tv_sec = 0;
+	tv.tv_usec = timeout_first*1000;
+	for(i=0; i<len; i++){
+		FD_ZERO(&fds);
+		FD_SET(uart_fd, &fds);
+		ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
+		if(ret < 0){
+			printd(ERROR, "uart_read_until seclect error\n");
+			return -1;
+		}else if(ret > 0){
+			ret = read(uart_fd, &c, 1);
+			if(ret < 0){
+				printd(ERROR, "uart_read_until read error\n");
+			}else{
+				buffer[i] = c;
+			}
+			tv.tv_sec = 0;
+			tv.tv_usec = timeout_interval*1000;
+		}else{
+			if(i == 0){
+				//printd(ERROR, "read time out\n");
+				return -1;
+			}else{
+				return i;
+			}
 		}
 	}
 	return i;

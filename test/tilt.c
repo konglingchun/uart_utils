@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	uart_fd = uart_init("/dev/ttyUSB0", 9600, 8, 1, 'N', 0);
 	clear_screen();
 	while(1){
-		receive_length = uart_read_until(uart_fd, receive_buffer, sizeof(receive_buffer), '\n', 50);
+		receive_length = uart_read_until_char(uart_fd, receive_buffer, sizeof(receive_buffer), '\n', 50);
 		if(receive_length > 0){
 			//print_buffer("", receive_buffer, receive_length);
 			//print_buffer_hex("", receive_buffer, receive_length);

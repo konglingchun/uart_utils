@@ -1,136 +1,196 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdint.h>
 
 #include "uart_utils.h"
 #include "buffer_utils.h"
 #include "buffer_queue.h"
 #include "checksum8.h"
 
-enum{
-	OK,
-	NOTOK
-};
-
-int check_integrity(void *data)
+//#define RUF_MASK 0x80
+//x^16 + x^12 + x^5 + 1
+//
+#define POLYNOMIAL 0x8408
+#define PRESET_VALUE 0xFFFF
+#define CHECK_VALUE 0xF0B8
+#define CALC_CRC 0x1
+#define CHECK_CRC 0x0
+//
+unsigned rfid_crc_calc(unsigned char *data_byte, unsigned int byte_len)
 {
-	unsigned char *data_ptr = data;
+	unsigned int current_crc_value;
+	unsigned int i,j;
+	current_crc_value = PRESET_VALUE;
 	
-	if(data_ptr[0] == 0x7f) {
-		if(checksum8_xor(data_ptr, 1, data_ptr[1]) == data_ptr[data_ptr[1]+1]) {
-			return OK;
-		}
-	} else {
-		return NOTOK;
-	}
-	return OK;
-}
-
-int rfid_find_head(unsigned char *buffer, int size)
-{
-	int i;
-	int head = -1;
-	
-	if(size < 5){
-		return -1;
-	}
-	for(i=0;i<(size - 1);i++) {
-		if((buffer[i] == 0x7f)
-		  &&(buffer[i+1] != 0x7f)){
-			head = i;
-			break;
+	for(i=0; i<byte_len; i++)
+	{
+		current_crc_value = current_crc_value^data_byte[i];
+		for(j=0; j<8; j++)
+		{
+			if(current_crc_value&0x0001)
+			{
+				current_crc_value = (current_crc_value>>1)^POLYNOMIAL;
+			}
+			else
+			{
+				current_crc_value = (current_crc_value>>1);
+			}
 		}
 	}
-	return head;
+	current_crc_value = ~current_crc_value;
+	return current_crc_value;
 }
 
-int rfid_get_command_length(unsigned char *buffer, int head)
+int rfid_read_uid_request(int uart_fd, uint16_t addr_src, uint16_t addr_dest)
 {
-	return buffer[head+1];
-}
-
-int rfid_get_char_length(unsigned char *buffer, int length, int size)
-{
-
-	return 0;
-}
-
-void print_buffer(char *pre, unsigned char *buffer, int size)
-{
-	int i;
-	
-	printf("%s", pre);
-	for(i=0;i<size;i++) {
-		printf("%02x,", buffer[i]);
+	unsigned char request[12] = {0x7E, 0x55, 0x09, 0x00, 0x00, 0xAA, 0xAA, 0x11, 0x00, 0x00};
+	uint16_t crc = 0;
+	int ret = 0;
+		
+	request[3] = addr_src&0xff;
+	request[4] = addr_src>>8;
+	request[5] = addr_dest&0xff;
+	request[6] = addr_dest>>8;
+	crc = rfid_crc_calc(request+2, request[2]-1);
+	request[10] = crc&0xff;
+	request[11] = crc>>8;
+	print_buffer_hex("rfid_read_uid_request", request, request[2]+3);
+	ret = write(uart_fd, request, request[2]+3);
+	if(ret < 0)
+	{
+		printf("rfid_read_uid_request write error\n");
 	}
-	printf("\n");
+	return ret;
 }
 
-void rfid_process(_buffer_queue_t *handler, unsigned char *buffer, int size)
+int rfid_read_data_request(int uart_fd, uint16_t addr_src, uint16_t addr_dest, unsigned long long uid)
 {
-	int head, length;
+	unsigned char request[21] = {0x7E, 0x55, 0x12, 0x00, 0x00, 0xAA, 0xAA, 0x22, 0x00, 0x16, 0xF1, 0xF7, 0x2D, 0x00, 0x01, 0x04, 0xE0, 0x00, 0x02};
+	uint16_t crc = 0;
+	int ret = 0;
+		
+	request[3] = addr_src&0xff;
+	request[4] = addr_src>>8;
+	request[5] = addr_dest&0xff;
+	request[6] = addr_dest>>8;
+	request[9] = (uid>>0)&0xff;
+	request[10] = (uid>>1*8)&0xff;
+	request[11] = (uid>>2*8)&0xff;
+	request[12] = (uid>>3*8)&0xff;
+	request[13] = (uid>>4*8)&0xff;
+	request[14] = (uid>>5*8)&0xff;
+	request[15] = (uid>>6*8)&0xff;
+	request[16] = (uid>>7*8)&0xff;
+	crc = rfid_crc_calc(request+2, request[2]-1);
+	request[19] = crc&0xff;
+	request[20] = crc>>8;
+	print_buffer_hex("rfid_read_data_request", request, request[2]+3);
+	ret = write(uart_fd, request, request[2]+3);
+	if(ret < 0)
+	{
+		printf("rfid_read_data_request write error\n");
+	}
+	return ret;
+}
 
-	//print_buffer("src:", buffer, size);
-	head = rfid_find_head(buffer, size);
-	if(head >= 0){
-		length = rfid_get_command_length(buffer, head);
-		//printf("length = %d, size = %d\n", length, size-head);
-		if((length+2) <= size){
-			printf("device:%d\n", (buffer+head)[2]);
-			print_buffer("\tdata:", buffer+head, size-head);
-			//rfid_get_char_length(buffer+head, length, size-head);
-			_buffer_queue_empty(handler);
-		} else {
-			//print_buffer("dest2:", buffer+head, size-head);
+
+int rfid_read_uid_response(int uart_fd, unsigned char *buffer, unsigned int len)
+{
+	int receive_length;
+
+	receive_length = uart_read_until_time(uart_fd, buffer, len, 200, 10);
+	if(receive_length > 0){
+		print_buffer_hex("rfid_read_uid_response", buffer, receive_length);
+	}
+	return receive_length;
+}
+
+int rfid_read_data_response(int uart_fd, unsigned char *buffer, unsigned int len)
+{
+	int receive_length;
+
+	receive_length = uart_read_until_time(uart_fd, buffer, len, 200, 10);
+	if(receive_length > 0){
+		print_buffer_hex("rfid_read_data_response", buffer, receive_length);
+	}
+	return receive_length;
+}
+
+
+int rfid_read_uid_analysis(unsigned char *buffer, unsigned int len, unsigned long long *uid)
+{
+	long ret = -1;
+
+	print_buffer_hex_index("rfid_read_uid_analysis", buffer, len);
+	if(buffer[0] = 0x7E 
+		&& buffer[1] == 0x55
+		&& buffer[2] >= 0x14
+		&& buffer[7] == 0x1f
+		&& buffer[8] == 0x11
+		&& len >= 23){
+		if(uid != NULL){
+			*uid = (((unsigned long long)buffer[17])<<(7*8))
+				|(((unsigned long long)buffer[16])<<(6*8))
+				|(((unsigned long long)buffer[15])<<(5*8))
+				|(((unsigned long long)buffer[14])<<(4*8))
+				|(((unsigned long long)buffer[13])<<(3*8))
+				|(((unsigned long long)buffer[12])<<(2*8))
+				|(((unsigned long long)buffer[11])<<(1*8))
+				|(((unsigned long long)buffer[10])<<(0*8));
 		}
+	}else{
+		printf("Mismatch with protocol\n");
 	}
+	return ret;
+}
+
+int rfid_read_data_analysis(unsigned char *buffer, unsigned int len, unsigned long long *data)
+{
+	long ret = -1;
+
+	print_buffer_hex_index("rfid_read_data_analysis", buffer, len);
+	if(buffer[0] = 0x7E 
+		&& buffer[1] == 0x55
+		&& buffer[2] >= 0x13
+		&& buffer[7] == 0x1f
+		&& buffer[8] == 0x22
+		&& len >= 22){
+		if(data != NULL){
+			*data = (((unsigned long long)buffer[10])<<(7*8))
+				|(((unsigned long long)buffer[11])<<(6*8))
+				|(((unsigned long long)buffer[12])<<(5*8))
+				|(((unsigned long long)buffer[13])<<(4*8))
+				|(((unsigned long long)buffer[14])<<(3*8))
+				|(((unsigned long long)buffer[15])<<(2*8))
+				|(((unsigned long long)buffer[16])<<(1*8))
+				|(((unsigned long long)buffer[17])<<(0*8));;
+		}
+	}else{
+		printf("Mismatch with protocol\n");
+	}
+	return ret;
 }
 
 int main(int argc, char *argv[])
 {
 	int uart_fd;
-	unsigned char receive_buffer[256] = "";
-	unsigned char process_buffer[256] = "";
-	int receive_length = 0;
-	_buffer_queue_t handler;
+	int receive_length;
+	char receive_buffer[1024] = "";
+	unsigned long long uid = 0;
+	unsigned long long data = 0;
 	
-	/*打开并初始化串口*/
-	uart_fd = uart_init("/dev/ttyUSB0", 115200, 8, 1, 'N', 0);
-	_buffer_queue_init(&handler, 256);
-	
-	/*串口发送信息*/
-	//write(uart_fd, "this is test\n", strlen("this is test\n"));	
-	
-	/*串口接收信息*/
-	while(1) {
-		fd_set fds;
-		int ret;
-		
-		FD_ZERO(&fds);
-		FD_SET(uart_fd, &fds);
-		ret = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
-		if(ret < 0){
-			perror("seclect");
-			return -1;
-		}else if(ret > 0){
-			memset(receive_buffer, 0, sizeof(receive_buffer));
-			receive_length = read(uart_fd, receive_buffer, sizeof(receive_buffer));
-			if(receive_length < 0){
-				perror("read");
-			} else {
-				ret = _buffer_queue_enqueue_multi(&handler, receive_buffer, receive_length);
-				if(ret != receive_length){
-					printf("queue full\n");
-					_buffer_queue_flush(&handler, 256);
-				}
-			}
-		}else{
-			return -1;
-		}
-		ret = _buffer_queue_ergodic_buffer(&handler, process_buffer, 0, sizeof(process_buffer));
-		rfid_process(&handler, process_buffer, ret);
-	}
-	uart_uninit(uart_fd);
-	return 0;
+	uart_fd = uart_init("/dev/ttyUSB0", 38400, 8, 1, 'N', 0);
+	rfid_read_uid_request(uart_fd, 0x00, 0xabcd);
+	receive_length = rfid_read_uid_response(uart_fd, receive_buffer, sizeof(receive_buffer));
+	rfid_read_uid_analysis(receive_buffer, receive_length, &uid);
+	printf("%llX\n", uid);
+	usleep(50*1000);//cmd request must wait 50 ms at least
+	rfid_read_data_request(uart_fd, 0x00, 0xabcd, uid);
+	receive_length = rfid_read_data_response(uart_fd, receive_buffer, sizeof(receive_buffer));
+	rfid_read_data_analysis(receive_buffer, receive_length, &data);
+	printf("%#llX\n", data);
+    return 0;
 }
 
