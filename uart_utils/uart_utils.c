@@ -415,18 +415,20 @@ int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until
 			printd(ERROR, "uart_read_until seclect error\n");
 			return -1;
 		}else if(ret > 0){
-			ret = read(uart_fd, &c, 1);
-			if(ret < 0){
-				printd(ERROR, "uart_read_until read error\n");
-			}else{
-				buffer[i] = c;
+			if(FD_ISSET(uart_fd, &fds)){
+				ret = read(uart_fd, &c, 1);
+				if(ret < 0){
+					printd(ERROR, "uart_read_until read error\n");
+				}else{
+					buffer[i] = c;
 #if 0		
-				printd(INFO, "i= %d\n", i);
-				printd(INFO, "\t,[%#x], <%c>\n", c, c);
+					printd(INFO, "i= %d\n", i);
+					printd(INFO, "\t,[%#x], <%c>\n", c, c);
 #endif				
-				if(c == until){
-					i++;
-					break;
+					if(c == until){
+						i++;
+						break;
+					}
 				}
 			}
 		}else{
@@ -467,11 +469,13 @@ int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, 
 			printd(ERROR, "uart_read_until seclect error\n");
 			return -1;
 		}else if(ret > 0){
-			ret = read(uart_fd, &c, 1);
-			if(ret < 0){
-				printd(ERROR, "uart_read_until read error\n");
-			}else{
-				buffer[i] = c;
+			if(FD_ISSET(uart_fd, &fds)){
+				ret = read(uart_fd, &c, 1);
+				if(ret < 0){
+					printd(ERROR, "uart_read_until read error\n");
+				}else{
+					buffer[i] = c;
+				}
 			}
 			tv.tv_sec = 0;
 			tv.tv_usec = timeout_interval*1000;
