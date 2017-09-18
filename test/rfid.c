@@ -62,6 +62,7 @@ int rfid_read_uid_request(int uart_fd, uint16_t addr_src, uint16_t addr_dest)
 	{
 		printf("rfid_read_uid_request write error\n");
 	}
+	usleep(50*1000);//cmd request must wait 50 ms at least
 	return ret;
 }
 
@@ -139,9 +140,10 @@ int rfid_read_uid_analysis(unsigned char *buffer, unsigned int len, unsigned lon
 				|(((unsigned long long)buffer[12])<<(2*8))
 				|(((unsigned long long)buffer[11])<<(1*8))
 				|(((unsigned long long)buffer[10])<<(0*8));
+			ret = 0;
 		}
 	}else{
-		printf("Mismatch with protocol\n");
+		printf("Mismatch with protocol or other error\n");
 	}
 	return ret;
 }
@@ -156,6 +158,8 @@ int rfid_read_data_analysis(unsigned char *buffer, unsigned int len, unsigned lo
 		&& buffer[2] >= 0x13
 		&& buffer[7] == 0x1f
 		&& buffer[8] == 0x22
+		&& buffer[18] == 0//judge ok or error
+		&& buffer[19] == 0//judge ok or error
 		&& len >= 22){
 		if(data != NULL){
 			*data = (((unsigned long long)buffer[10])<<(7*8))
@@ -165,32 +169,69 @@ int rfid_read_data_analysis(unsigned char *buffer, unsigned int len, unsigned lo
 				|(((unsigned long long)buffer[14])<<(3*8))
 				|(((unsigned long long)buffer[15])<<(2*8))
 				|(((unsigned long long)buffer[16])<<(1*8))
-				|(((unsigned long long)buffer[17])<<(0*8));;
+				|(((unsigned long long)buffer[17])<<(0*8));
+			ret = 0;
 		}
 	}else{
-		printf("Mismatch with protocol\n");
+		printf("Mismatch with protocol or other error\n");
 	}
 	return ret;
 }
 
-int main(int argc, char *argv[])
+void rfid_read_uid_demo(int uart_fd, unsigned long long *uid)
 {
-	int uart_fd;
 	int receive_length;
 	char receive_buffer[1024] = "";
-	unsigned long long uid = 0;
-	unsigned long long data = 0;
+	int ret;
 	
-	uart_fd = uart_init("/dev/ttyUSB0", 38400, 8, 1, 'N', 0);
+uid_retry:
 	rfid_read_uid_request(uart_fd, 0x00, 0xabcd);
 	receive_length = rfid_read_uid_response(uart_fd, receive_buffer, sizeof(receive_buffer));
-	rfid_read_uid_analysis(receive_buffer, receive_length, &uid);
-	printf("%llX\n", uid);
-	usleep(50*1000);//cmd request must wait 50 ms at least
+	ret = rfid_read_uid_analysis(receive_buffer, receive_length, uid);
+	if(ret < 0){
+		usleep(100*1000);
+		goto uid_retry;
+	}
+	printf("%llX\n", *uid);
+	usleep(50*1000);
+}
+
+void rfid_read_data_demo(int uart_fd, unsigned long long uid)
+{
+	int receive_length;
+	char receive_buffer[1024] = "";
+	unsigned long long data = 0;
+	int ret;
+	
+data_retry:
 	rfid_read_data_request(uart_fd, 0x00, 0xabcd, uid);
 	receive_length = rfid_read_data_response(uart_fd, receive_buffer, sizeof(receive_buffer));
-	rfid_read_data_analysis(receive_buffer, receive_length, &data);
+	ret = rfid_read_data_analysis(receive_buffer, receive_length, &data);
+	if(ret < 0){
+		usleep(100*1000);
+		goto data_retry;
+	}
 	printf("%#llX\n", data);
+	usleep(50*1000);
+}
+
+void rfid_test(void)
+{
+	int uart_fd;
+	unsigned long long uid;
+	
+	uart_fd = uart_init("/dev/ttyUSB0", 38400, 8, 1, 'N', 0);
+	while(1){
+		rfid_read_uid_demo(uart_fd, &uid);
+	}
+	while(1){		
+		rfid_read_data_demo(uart_fd, uid);
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	rfid_test();
     return 0;
 }
 
