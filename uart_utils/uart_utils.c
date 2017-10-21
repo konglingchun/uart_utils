@@ -432,7 +432,7 @@ int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until
 				}
 			}
 		}else{
-			printd(ERROR, "read time out\n");
+			//printd(ERROR, "read time out\n");
 			return -1;
 		}
 	}
