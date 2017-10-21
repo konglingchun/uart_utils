@@ -33,15 +33,9 @@ void print_buffer_hex_index(char *pre, char *buffer, int size)
 
 void print_buffer(char *pre, char *buffer, int size)
 {
-	int i;
-
 	printf("\e[31;1m");
 	fflush(stdout);
-	printf("%s{", pre);
-	for(i=0;i<size;i++) {
-		printf("%c", (unsigned char)buffer[i]);
-	}
-	printf("}\n");
+	printf("%s{%s}\n", pre, buffer);
 	printf("\e[0m");
 	fflush(stdout);
 }
@@ -54,7 +48,13 @@ void print_buffer_char(char *pre, char *buffer, int size)
 	fflush(stdout);
 	printf("%s{", pre);
 	for(i=0;i<size;i++) {
-		printf("%c,", (unsigned char)buffer[i]);
+		if(buffer[i] == '\r'){
+			printf("'\\r',");
+		}else if(buffer[i] == '\n'){
+			printf("'\\n',");
+		}else{
+			printf("%c,", (unsigned char)buffer[i]);
+		}
 	}
 	printf("}\n");
 	printf("\e[0m");
