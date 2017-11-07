@@ -56,7 +56,7 @@ void print_buffer(char *pre, char *buffer, int size)
 {
 	printf("\e[31;1m");
 	fflush(stdout);
-	printf("%s{%s}\n", pre, buffer);
+	printf("%s[%d]{%s}\n", pre, size, buffer);
 	printf("\e[0m");
 	fflush(stdout);
 }
@@ -67,7 +67,7 @@ void print_buffer_char(char *pre, char *buffer, int size)
 
 	printf("\e[32;1m");
 	fflush(stdout);
-	printf("%s{", pre);
+	printf("%s[%d]{", pre, size);
 	for(i=0;i<size;i++) {
 		if(buffer[i] == '\r'){
 			printf("'\\r',");
@@ -88,7 +88,7 @@ void print_buffer_char_index(char *pre, char *buffer, int size)
 
 	printf("\e[32;1m");
 	fflush(stdout);
-	printf("%s{", pre);
+	printf("%s[%d]{", pre, size);
 	for(i=0;i<size;i++) {
 		if(buffer[i] == '\r'){
 			printf("'\\r',");
@@ -109,7 +109,7 @@ void print_buffer_hex(char *pre, char *buffer, int size)
 
 	printf("\e[34;1m");
 	fflush(stdout);
-	printf("%s{", pre);
+	printf("%s[%d]{", pre, size);
 	for(i=0;i<size;i++) {
 		printf("%#02hhx,", (unsigned char)buffer[i]);
 	}
@@ -124,7 +124,7 @@ void print_buffer_hex_index(char *pre, char *buffer, int size)
 
 	printf("\e[34;1m");
 	fflush(stdout);
-	printf("%s{", pre);
+	printf("%s[%d]{", pre, size);
 	for(i=0;i<size;i++) {
 		printf("[%d]=%#02hhx,", i, (unsigned char)buffer[i]);
 	}
