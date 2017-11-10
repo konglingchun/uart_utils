@@ -1,6 +1,5 @@
 #include <stdint.h>
 
-
 /* Table of CRC values for high-order byte */
 static const uint8_t table_crc_hi[] = {
     0x00, 0xC1, 0x81, 0x40, 0x01, 0xC0, 0x80, 0x41, 0x01, 0xC0,
@@ -61,7 +60,7 @@ static const uint8_t table_crc_lo[] = {
     0x43, 0x83, 0x41, 0x81, 0x80, 0x40
 };
 
-uint16_t crc16(uint8_t *buffer, uint16_t buffer_length)
+uint16_t crc16_calculate(uint8_t *buffer, uint16_t buffer_length)
 {
     uint8_t crc_hi = 0xFF; /* high CRC byte initialized */
     uint8_t crc_lo = 0xFF; /* low CRC byte initialized */
@@ -77,11 +76,37 @@ uint16_t crc16(uint8_t *buffer, uint16_t buffer_length)
     return (crc_hi << 8 | crc_lo);
 }
 
-int crc_send_msg_pre(uint8_t *req, int req_length)
+int crc16_check(uint8_t *buffer, int size, int crc_length)
 {
-    uint16_t crc = crc16(req, req_length);
-    req[req_length++] = crc >> 8;
-    req[req_length++] = crc & 0x00FF;
+	uint16_t crc = 0;
+	int ret = 0;
 
-    return req_length;
+	if(size >= (crc_length + 2)){
+		crc = crc16_calculate(buffer, crc_length);
+		if(((buffer[crc_length] ^ (crc >> 8)) == 0)
+			&&((buffer[crc_length+1]^(crc & 0x00FF)) == 0)){
+			ret = 1;
+		}else{
+			ret = 0;
+		}
+	}else{
+		ret = 0;
+	}
+	return ret;
 }
+
+int crc16_append(uint8_t *buffer, int size, int crc_length)
+{
+    uint16_t crc = 0;
+
+	if(size >= (crc_length + 2)){
+		crc = crc16_calculate(buffer, crc_length);
+    	buffer[crc_length] = crc >> 8;
+		crc_length++;
+		buffer[crc_length] = crc & 0x00FF;
+	}else{
+		return 0;	
+	}
+    return crc_length;
+}
+

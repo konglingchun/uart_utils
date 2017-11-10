@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
-uint16_t crc16(uint8_t *buffer, uint16_t buffer_length);
+extern uint16_t crc16_calculate(uint8_t *buffer, uint16_t buffer_length);
 
-int crc_send_msg_pre(uint8_t *req, int req_length);
+extern int crc16_check(uint8_t *buffer, int size, int crc_length);
+
+extern int crc16_append(uint8_t *buffer, int size, int crc_length);
 
 #endif
