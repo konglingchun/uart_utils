@@ -412,13 +412,15 @@ int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until
 		FD_SET(uart_fd, &fds);
 		ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
 		if(ret < 0){
-			printd(ERROR, "uart_read_until seclect error\n");
+			printd(ERROR, "seclect error\n");
 			return -1;
 		}else if(ret > 0){
 			if(FD_ISSET(uart_fd, &fds)){
 				ret = read(uart_fd, &c, 1);
 				if(ret < 0){
-					printd(ERROR, "uart_read_until read error\n");
+					printd(ERROR, "read error\n");
+				}else if(ret == 0){
+					printd(INFO, "end of file\n");
 				}else{
 					buffer[i] = c;
 #if 0		
@@ -433,7 +435,7 @@ int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned char until
 			}
 		}else{
 			//printd(ERROR, "read time out\n");
-			return -1;
+			return -2;
 		}
 	}
 	return i;
@@ -466,13 +468,15 @@ int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, 
 		FD_SET(uart_fd, &fds);
 		ret = select(FD_SETSIZE, &fds, NULL, NULL, &tv);
 		if(ret < 0){
-			printd(ERROR, "uart_read_until seclect error\n");
+			printd(ERROR, "seclect error\n");
 			return -1;
 		}else if(ret > 0){
 			if(FD_ISSET(uart_fd, &fds)){
 				ret = read(uart_fd, &c, 1);
 				if(ret < 0){
-					printd(ERROR, "uart_read_until read error\n");
+					printd(ERROR, "read error\n");
+				}else if(ret == 0){
+					printd(INFO, "end of file\n");
 				}else{
 					buffer[i] = c;
 				}
@@ -482,7 +486,7 @@ int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, 
 		}else{
 			if(i == 0){
 				//printd(ERROR, "read time out\n");
-				return -1;
+				return -2;
 			}else{
 				return i;
 			}
