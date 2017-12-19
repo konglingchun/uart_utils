@@ -5,24 +5,32 @@
 #include "buffer_queue.h"
 #include "debug_print.h"
 
+//data:[front, rear)
+
 /*
  * 队列初始化
  */
-void _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size)
+int _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size)
 {
+	int ret = 0;
+	
 	handler->front = 0;
 	handler->rear = 0;
 	if(capacity == 0) {
 		printd(ERROR, "capacity must greater than 0\n");
-		exit(EXIT_FAILURE);
+		ret = -1;
+		goto error;
 	}
 	handler->capacity = capacity+1;
-	handler->data = calloc(capacity, data_size);
+	handler->data = calloc(handler->capacity, data_size);
 	handler->data_size = data_size;
 	if(handler->data == NULL) {
 		printd(ERROR, "_buffer_queue_init: calloc\n");
-		exit(EXIT_FAILURE);
+		ret = -2;
+		goto error;
 	}
+error:	
+	return ret;
 }
 
 /*
@@ -55,6 +63,7 @@ int _buffer_queue_enqueue_flush(_buffer_queue_t *handler, void *data)
 	int ret;
 
 	size = _buffer_queue_size(handler);
+	//printd(INFO, "queue zize = %d, front = %d, rear = %d\n", size, handler->front, handler->rear);
 	if(size == (handler->capacity - 1)) {
 		ret = _buffer_queue_dequeue(handler, NULL);
 		if(ret != 0) {
@@ -81,7 +90,7 @@ int _buffer_queue_enqueue(_buffer_queue_t *handler, void *data)
 {
 	if(((handler->rear + 1) % handler->capacity == handler->front))
 		return -1;
-	memcpy((unsigned char *)handler->data + handler->rear * handler->data_size, data, handler->data_size);
+	memcpy(handler->data + handler->rear * handler->data_size, data, handler->data_size);
 	handler->rear = (handler->rear + 1) % handler->capacity;
 	//printd(DEBUG, "front = %d, rear = %d", handler->front, handler->rear);
 	return 0;
@@ -132,7 +141,7 @@ int _buffer_queue_dequeue(_buffer_queue_t *handler, void *data)
 	if(handler->front == handler->rear) 
 		return -1;
 	if(data != NULL) {
-		memcpy(data, (unsigned char *)handler->data + handler->front * handler->data_size, handler->data_size);
+		memcpy(data, handler->data + handler->front * handler->data_size, handler->data_size);
 	}
 	//printd(DEBUG, "front = %d, rear = %d", (handler->front + 1) % handler->capacity, handler->rear);
 	handler->front = (handler->front + 1) % handler->capacity;

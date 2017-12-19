@@ -18,7 +18,7 @@ typedef struct {
 /*
  * 队列初始化
  */
-extern void _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size);
+extern int _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size);
 
 /*
  * 清空队列
