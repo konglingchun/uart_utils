@@ -206,7 +206,8 @@ int _buffer_queue_ergodic_buffer(_buffer_queue_t *handler, void *data_arry, int 
 	buffer_temp = data_arry;
 	while((ergodic_ptr != handler->rear)
 		 && (queue_readable_temp != 0)) {
-		memcpy(buffer_temp++, (unsigned char *)handler->data + ergodic_ptr * handler->data_size, handler->data_size);
+		memcpy(buffer_temp, (unsigned char *)handler->data + ergodic_ptr * handler->data_size, handler->data_size);
+		buffer_temp += handler->data_size;
 		ergodic_ptr = (ergodic_ptr + 1) % handler->capacity;
 		queue_readable_temp--;
 	}
