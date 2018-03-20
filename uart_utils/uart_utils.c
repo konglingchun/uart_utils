@@ -59,19 +59,21 @@ static struct termios *uart_default_attr(void)
 		printd(ERROR, "calloc");
 		_exit(-1);
 	}
+#if 0
+	options->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+			   | INLCR | IGNCR | ICRNL | IXON);
+	options->c_oflag &= ~(OPOST|ONLCR|OCRNL);
+	options->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	options->c_cflag &= ~(CSIZE | PARENB);
+	options->c_cflag |= CS8;
+#else
 	/*
 	cfmakeraw() sets the terminal to something like the "raw" mode of the old Version 7 terminal driver:
 	input is available character by character, echoing is disabled, and all special processing of terminal input
-	and output characters is disabled.  The terminal attributes are set as follows:
-
-	termios_p->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-	           | INLCR | IGNCR | ICRNL | IXON);
-	termios_p->c_oflag &= ~OPOST;
-	termios_p->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	termios_p->c_cflag &= ~(CSIZE | PARENB);
-	termios_p->c_cflag |= CS8;
+	and output characters is disabled.	The terminal attributes are set as follows:
 	*/
 	cfmakeraw(options);
+#endif
 	return options;
 }
 
@@ -99,6 +101,11 @@ struct termios *uart_set_attr(int fd,
 	if(options == NULL)
 	{
 		options = uart_default_attr();
+	}
+	else
+	{
+		options->c_iflag &= ~(INLCR|IGNCR|ICRNL);
+		options->c_oflag &= ~(ONLCR|OCRNL); 
 	}
 	/****************忽略调制解调器线路状态****************/
 	options->c_cflag |= CLOCAL;
@@ -342,7 +349,7 @@ int uart_init(char *devname,
 
 	uart_fd = uart_open(devname);
 	tcgetattr(uart_fd, &option_old);	//保存串口属性
-	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, NULL);
+	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, &option_old);
 
 	/****************读取字符最小个数为1****************/
 	options->c_cc[VMIN] = 1;
@@ -351,7 +358,9 @@ int uart_init(char *devname,
 	
 	tcflush(uart_fd, TCIFLUSH);
 	tcsetattr(uart_fd, TCSANOW, options);	/* 设置串口属性 */
-	free(options);
+	if(options != &option_old){
+		free(options);
+	}
 	return uart_fd;
 }
 
