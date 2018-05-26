@@ -219,14 +219,26 @@ void rfid_test(void)
 {
 	int uart_fd;
 	unsigned long long uid;
+	int receive_length;
+	char buffer[512] = "";
+	unsigned char request[12] = {'\n', 'S', '\r'};
+	int ret = 0;
 	
 	uart_fd = uart_init("/dev/ttyUSB0", 38400, 8, 1, 'N', 0);
-	while(1){
-		rfid_read_uid_demo(uart_fd, &uid);
+	//uart_set_echo(uart_fd, 0);
+	print_buffer_hex("rfid request", request, strlen(request));
+	ret = write(uart_fd, request, strlen(request));
+	if(ret < 0)
+	{
+		printf("rfid write error\n");
 	}
-	while(1){		
-		rfid_read_data_demo(uart_fd, uid);
+	receive_length = uart_read_until_time(uart_fd, buffer, sizeof(buffer), 100, 10);
+	if(receive_length > 0){
+		print_buffer_hex("rfid response", buffer, receive_length);
+		print_buffer_char("rfid response", buffer, receive_length);
+		print_buffer("rfid response", buffer, receive_length);
 	}
+	uart_uninit(uart_fd);
 }
 
 int main(int argc, char *argv[])

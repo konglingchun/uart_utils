@@ -1,6 +1,10 @@
 #ifndef _BUFFER_QUEUE_H_
 #define _BUFFER_QUEUE_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define QUEUE_CHAR sizeof(char)
 #define QUEUE_INT sizeof(int)
 #define QUEUE_LONG sizeof(long)
@@ -51,6 +55,11 @@ extern int _buffer_queue_enqueue_multi(_buffer_queue_t *handler, void *data_arry
 extern void _buffer_queue_flush(_buffer_queue_t *handler, int size);
 
 /*
+ * 清出队尾的元素
+ */
+extern void _buffer_queue_delete(_buffer_queue_t *handler);
+
+/*
  * 从队列取出元素
  */
 extern int _buffer_queue_dequeue(_buffer_queue_t *handler, void *data);
@@ -71,5 +80,9 @@ extern int _buffer_queue_size_left(_buffer_queue_t *handler);
 
 //start from 0
 extern int _buffer_queue_ergodic_buffer(_buffer_queue_t *handler, void *data_arry, int start, int length);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

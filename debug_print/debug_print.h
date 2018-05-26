@@ -1,6 +1,10 @@
 #ifndef __DEBUG_PRINT__
 #define __DEBUG_PRINT__
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define DEBUG		0
 #define INFO		1
 #define WARN		2
@@ -15,5 +19,9 @@ extern int debug_print(int level, char *name, long line, const char *function, c
    do{ \
 		debug_print(level, __FILE__, __LINE__, __FUNCTION__, fmt, ##args);\
    }while(0)
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

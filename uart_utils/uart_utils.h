@@ -1,6 +1,10 @@
 #ifndef _UART_INIT_H_
 #define _UART_INIT_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #include <termios.h>
 
 extern int uart_open(char *dev_name);
@@ -98,5 +102,9 @@ extern int uart_read_until_char(int uart_fd, char *buffer, int len, unsigned cha
 			失败：-1
 **************************************************************/
 extern int uart_read_until_time(int uart_fd, char *buffer, int len, int timeout_first, int timeout_interval);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif

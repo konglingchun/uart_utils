@@ -73,6 +73,8 @@ void print_buffer_char(char *pre, char *buffer, int size)
 			printf("'\\r',");
 		}else if(buffer[i] == '\n'){
 			printf("'\\n',");
+		}else if(buffer[i] == '\t'){
+			printf("'\\t',");
 		}else{
 			printf("%c,", (unsigned char)buffer[i]);
 		}

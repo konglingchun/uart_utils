@@ -134,6 +134,21 @@ void _buffer_queue_flush(_buffer_queue_t *handler, int size)
 }
 
 /*
+ * 清出队尾的元素
+ */
+void _buffer_queue_delete(_buffer_queue_t *handler)
+{
+	int size;
+	int size_enqueued;
+	int i;
+	
+	size = _buffer_queue_size(handler);
+	if(size){
+		handler->rear = (handler->rear - 1 + handler->capacity)%handler->capacity;
+	}
+}
+
+/*
  * 从队列取出元素
  */
 int _buffer_queue_dequeue(_buffer_queue_t *handler, void *data)
