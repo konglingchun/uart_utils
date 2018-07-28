@@ -34,10 +34,10 @@ void uart_print_attr(struct termios *options)
 {
 	int i;
 	
-	printd(INFO, "c_iflag = %#x\n", options->c_iflag);
-	printd(INFO, "c_oflag = %#x\n", options->c_oflag);
-	printd(INFO, "c_cflag = %#x\n", options->c_cflag);
-	printd(INFO, "c_lflag = %#x\n", options->c_lflag);
+	printd(INFO, "c_iflag = 0%o\n", options->c_iflag);
+	printd(INFO, "c_oflag = 0%o\n", options->c_oflag);
+	printd(INFO, "c_cflag = 0%o\n", options->c_cflag);
+	printd(INFO, "c_lflag = 0%o\n", options->c_lflag);
 	for(i=VINTR;i<=VEOL2;i++)
 	{
 		printf("c_cc[%d] = %d\n", i, options->c_cc[i]);
@@ -101,6 +101,8 @@ struct termios *uart_set_attr(int fd,
 	if(options == NULL)
 	{
 		options = uart_default_attr();
+		printd(INFO, "raw termios attribute\n");
+		uart_print_attr(options);
 	}
 	else
 	{
@@ -344,13 +346,17 @@ int uart_init(char *devname,
 				int check, 
 				int flow_ctrl)
 {
+//#define __USE_OLD_TC_OPTION
 	int uart_fd;
 	struct termios *options;
 
 	uart_fd = uart_open(devname);
 	tcgetattr(uart_fd, &option_old);	//保存串口属性
+#ifdef __USE_OLD_TC_OPTION
 	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, &option_old);
-
+#else
+	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, NULL);
+#endif
 	/****************读取字符最小个数为1****************/
 	options->c_cc[VMIN] = 1;
 	/****************读取第一个字符等待等待1 *(1/10)s****************/
@@ -358,9 +364,12 @@ int uart_init(char *devname,
 	
 	tcflush(uart_fd, TCIFLUSH);
 	tcsetattr(uart_fd, TCSANOW, options);	/* 设置串口属性 */
+	uart_print_attr(options);
+#ifndef __USE_OLD_TC_OPTION
 	if(options != &option_old){
 		free(options);
 	}
+#endif
 	return uart_fd;
 }
 
