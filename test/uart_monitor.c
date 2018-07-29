@@ -18,11 +18,12 @@ int main(int argc, char *argv[])
 		&& strstr(argv[1], "/dev/tty")){
 		uart_fd = uart_init(argv[1], 115200, 8, 1, 'N', 0);
 		while(1){
-			ret = uart_read_until_time(uart_fd, buffer, sizeof(buffer), 500, 10);
+			ret = uart_read_until_time(uart_fd, buffer, sizeof(buffer), 5000, 10);
+			//ret = read(uart_fd, buffer, sizeof(buffer));
 			if(ret > 0){
-				print_buffer("receive monitor1", buffer, ret);
-				print_buffer_char_index("receive monitor2", buffer, ret);
-				print_buffer_hex_index("receive monitor3", buffer, ret);
+				print_buffer("receive buffer", buffer, ret);
+				print_buffer_char_index("receive char", buffer, ret);
+				print_buffer_hex_index("receive hex", buffer, ret);
 			}
 		}
 	}else{

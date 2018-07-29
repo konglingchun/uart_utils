@@ -33,35 +33,19 @@ SET(SRC_LIST_BASE
 	${DIR_SRC_BUFFER_UQEUE}
 )
 
-SET(SRC_MAIN_TEST
-	${SRC_LIST_BASE}
-	test/main.c
-)
-
-SET(SRC_TILT_TEST
-	${SRC_LIST_BASE}
-	test/tilt.c
-)
-
 SET(SRC_QUEUE_TEST
 	${SRC_LIST_BASE}
 	test/queue.c
 )
 
-SET(SRC_RFID_TEST
+SET(SRC_UART_MONITOR
 	${SRC_LIST_BASE}
-	test/rfid.c
+	test/uart_monitor.c
 )
-
-ADD_EXECUTABLE(main ${SRC_MAIN_TEST})
-TARGET_LINK_LIBRARIES(main pthread)
-
-ADD_EXECUTABLE(tilt ${SRC_TILT_TEST})
-TARGET_LINK_LIBRARIES(tilt pthread)
 
 ADD_EXECUTABLE(queue ${SRC_QUEUE_TEST})
 TARGET_LINK_LIBRARIES(queue pthread)
 
-ADD_EXECUTABLE(rfid ${SRC_RFID_TEST})
-TARGET_LINK_LIBRARIES(rfid pthread)
+ADD_EXECUTABLE(uart_monitor ${SRC_UART_MONITOR})
+TARGET_LINK_LIBRARIES(uart_monitor pthread)
 
