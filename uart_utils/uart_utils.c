@@ -101,13 +101,14 @@ struct termios *uart_set_attr(int fd,
 	if(options == NULL)
 	{
 		options = uart_default_attr();
-		printd(INFO, "raw termios attribute\n");
-		uart_print_attr(options);
+		//printd(INFO, "raw termios attribute\n");
+		//uart_print_attr(options);
 	}
 	else
 	{
 		options->c_iflag &= ~(INLCR|IGNCR|ICRNL);
-		options->c_oflag &= ~(ONLCR|OCRNL); 
+		options->c_oflag &= ~(ONLCR|OCRNL);
+		options->c_lflag &= ~(ICANON|ISIG|IEXTEN);
 	}
 	/****************忽略调制解调器线路状态****************/
 	options->c_cflag |= CLOCAL;
@@ -346,12 +347,13 @@ int uart_init(char *devname,
 				int check, 
 				int flow_ctrl)
 {
-//#define __USE_OLD_TC_OPTION
+#define __USE_OLD_TC_OPTION
 	int uart_fd;
 	struct termios *options;
 
 	uart_fd = uart_open(devname);
 	tcgetattr(uart_fd, &option_old);	//保存串口属性
+	//uart_print_attr(&option_old);
 #ifdef __USE_OLD_TC_OPTION
 	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, &option_old);
 #else
@@ -363,8 +365,9 @@ int uart_init(char *devname,
 	options->c_cc[VTIME] = 1;
 	
 	tcflush(uart_fd, TCIFLUSH);
+	//uart_print_attr(options);
 	tcsetattr(uart_fd, TCSANOW, options);	/* 设置串口属性 */
-	uart_print_attr(options);
+	//uart_print_attr(options);
 #ifndef __USE_OLD_TC_OPTION
 	if(options != &option_old){
 		free(options);
