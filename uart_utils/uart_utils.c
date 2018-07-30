@@ -59,27 +59,28 @@ static struct termios *uart_default_attr(void)
 		printd(ERROR, "calloc");
 		_exit(-1);
 	}
-#if 0
-	options->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-			   | INLCR | IGNCR | ICRNL | IXON);
-	options->c_oflag &= ~(OPOST|ONLCR|OCRNL);
-	options->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	options->c_cflag &= ~(CSIZE | PARENB);
-	options->c_cflag |= CS8;
-#else
 	/*
 	cfmakeraw() sets the terminal to something like the "raw" mode of the old Version 7 terminal driver:
 	input is available character by character, echoing is disabled, and all special processing of terminal input
 	and output characters is disabled.	The terminal attributes are set as follows:
 	*/
 	cfmakeraw(options);
-#endif
+    /* Enable receiver.  */
+    options->c_cflag |= CREAD;
+    /* Ignore modem status lines.  */
+	options->c_cflag |= CLOCAL;
+	/* Number of bits per byte (mask).  */
+	options->c_cflag &= ~CSIZE;
+    /* Minimum number of bytes read at once [!ICANON].  */
+	options->c_cc[VMIN] = 1;
+	/* Time-out value (tenths of a second) [!ICANON].  */
+	options->c_cc[VTIME] = 0;
 	return options;
 }
 
 /*************************************************************
 * 功能：	设置串口属性结构体
-* 参数：	fd：串口设备文件描述符
+* 参数：	
 			speed：串口波特率（可选2400、4800、9600、115200。可自己酌情修改程序添加支持）
 			data_bits：数据位宽（可选5、6、7、8）
 			stop_bits：停止位（可选1、2）
@@ -88,7 +89,7 @@ static struct termios *uart_default_attr(void)
 			options：串口属结构体，
 * 返回值：	串口属性结构体
 **************************************************************/
-struct termios *uart_set_attr(int fd,
+struct termios *uart_set_attr(
 				int speed,
 				int data_bits,
 				int stop_bits,
@@ -101,19 +102,7 @@ struct termios *uart_set_attr(int fd,
 	if(options == NULL)
 	{
 		options = uart_default_attr();
-		//printd(INFO, "raw termios attribute\n");
-		//uart_print_attr(options);
 	}
-	else
-	{
-		options->c_iflag &= ~(INLCR|IGNCR|ICRNL);
-		options->c_oflag &= ~(ONLCR|OCRNL);
-		options->c_lflag &= ~(ICANON|ISIG|IEXTEN);
-	}
-	/****************忽略调制解调器线路状态****************/
-	options->c_cflag |= CLOCAL;
-	/****************数据位选择****************/   
-	options->c_cflag &= ~CSIZE;
 	switch(data_bits)     
 	{   
 		case 5:     
@@ -135,13 +124,13 @@ struct termios *uart_set_attr(int fd,
 	/****************校验位选择****************/    
 	switch(check)     
 	{     
-		case 'O':
+        case 'O':
 			options->c_cflag |= PARENB;//允许输出产生奇偶信息以及输入的奇偶校验
-			options->c_cflag |= PARODD;//输入和输出是奇校验(ODD)
+			options->c_cflag |= PARODD;//奇校验
 			options->c_iflag |= (INPCK|ISTRIP);//INPCK:启用输入奇偶检测;ISTRIP:去掉第八位(传输时只传7位)
 			break;     
-		case 'E':
-			options->c_cflag |= PARENB;
+        case 'E':
+            options->c_cflag |= PARENB;//允许输出产生奇偶信息以及输入的奇偶校验
 			options->c_cflag &= ~PARODD;//输入和输出是偶校验(ECC)
 			options->c_iflag |= (INPCK|ISTRIP);
 			break;     
@@ -340,40 +329,25 @@ void uart_set_block(int uart_fd, int block)
 		flow_ctrl：硬件流控制（0为OFF，1为ON）
 * 返回值：	串口设备文件描述符
 **************************************************************/
-int uart_init(char *devname,
+int uart_init(int uart_fd,
 			  	int speed,
 				int data_bits,
 				int stop_bits,
 				int check, 
 				int flow_ctrl)
 {
-#define __USE_OLD_TC_OPTION
-	int uart_fd;
 	struct termios *options;
 
-	uart_fd = uart_open(devname);
 	tcgetattr(uart_fd, &option_old);	//保存串口属性
 	//uart_print_attr(&option_old);
-#ifdef __USE_OLD_TC_OPTION
-	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, &option_old);
-#else
-	options = uart_set_attr(uart_fd, speed, data_bits, stop_bits, check, flow_ctrl, NULL);
-#endif
-	/****************读取字符最小个数为1****************/
-	options->c_cc[VMIN] = 1;
-	/****************读取第一个字符等待等待1 *(1/10)s****************/
-	options->c_cc[VTIME] = 1;
-	
+	options = uart_set_attr(speed, data_bits, stop_bits, check, flow_ctrl, NULL);
 	tcflush(uart_fd, TCIFLUSH);
 	//uart_print_attr(options);
 	tcsetattr(uart_fd, TCSANOW, options);	/* 设置串口属性 */
-	//uart_print_attr(options);
-#ifndef __USE_OLD_TC_OPTION
 	if(options != &option_old){
 		free(options);
 	}
-#endif
-	return uart_fd;
+    return uart_fd;
 }
 
 /*************************************************************

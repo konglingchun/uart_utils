@@ -56,7 +56,7 @@ extern void uart_set_block(int uart_fd, int block);
 		flow_ctrl：硬件流控制（0为OFF，1为ON）
 * 返回值：	串口设备文件描述符
 **************************************************************/
-extern int uart_init(char *devname,
+extern int uart_init(int uart_fd,
 			  	int speed,
 				int data_bits,
 				int stop_bits,
