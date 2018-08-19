@@ -65,6 +65,8 @@ static struct termios *uart_default_attr(void)
 	and output characters is disabled.	The terminal attributes are set as follows:
 	*/
 	cfmakeraw(options);
+    /* Ignore break characters */
+    options->c_iflag = IGNBRK;
     /* Enable receiver.  */
     options->c_cflag |= CREAD;
     /* Ignore modem status lines.  */
