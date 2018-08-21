@@ -21,7 +21,7 @@ int uart_open(char *dev_name)
 {
 	int uart_fd;
 	
-	uart_fd = open(dev_name, O_RDWR);
+	uart_fd = open(dev_name, O_RDWR|O_NOCTTY);
 	if(uart_fd < 0)
 	{
 		printd(ERROR, "uart_open\n");
