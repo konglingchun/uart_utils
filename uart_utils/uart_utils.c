@@ -12,6 +12,43 @@
 
 static struct termios option_old;
 
+#define STRING(x) #x
+#define TO_STRING(x) STRING(x)
+
+#define S(x)    X(x,B##x,TO_STRING(x))
+#define VALID_TERMINAL_SPEED_TABLE \
+        S(0)\
+        S(50)\
+        S(75)\
+        S(110)\
+        S(134)\
+        S(150)\
+        S(200)\
+        S(300)\
+        S(600)\
+        S(1200)\
+        S(1800)\
+        S(2400)\
+        S(4800)\
+        S(9600)\
+        S(19200)\
+        S(38400)\
+        S(57600)\
+        S(115200)\
+        S(230400)\
+        S(460800)\
+        S(500000)\
+        S(576000)\
+        S(921600)\
+        S(1000000)\
+        S(1152000)\
+        S(1500000)\
+        S(2000000)\
+        S(2500000)\
+        S(3000000)\
+        S(3500000)\
+        S(4000000)
+
 /*************************************************************
 * 功能：	打开串口设备文件
 * 参数：	串口设备文件名
@@ -80,6 +117,26 @@ static struct termios *uart_default_attr(void)
 	return options;
 }
 
+static inline const char* valid_terminal_speeds(void)
+{
+#define X(x,y,z) "\n\t " z
+    return VALID_TERMINAL_SPEED_TABLE;
+#undef X
+}
+
+static inline speed_t check_speed_parameter(int requested_speed)
+{
+    switch(requested_speed)
+    {
+#define X(x,y,z) case x: return y;
+        VALID_TERMINAL_SPEED_TABLE
+    default:
+        fprintf(stderr,"invalid speed parameters, valid values are %s\n", valid_terminal_speeds());
+        return B9600;
+#undef X
+    }
+}
+
 /*************************************************************
 * 功能：	设置串口属性结构体
 * 参数：	
@@ -99,7 +156,7 @@ struct termios *uart_set_attr(
 				int flow_ctrl,
 				struct termios *options)
 {
-	int baud_rate = 0;
+	speed_t baud_rate = 0;
 	
 	if(options == NULL)
 	{
@@ -168,106 +225,8 @@ struct termios *uart_set_attr(
 	{
 		options->c_cflag &= ~CSTOPB; 
 	}
-	/****************波特率选择****************/     
-	switch(speed)     
-	{
-		case 0:     
-			baud_rate = B0;    
-			break;
-		case 50:     
-			baud_rate = B50;    
-			break;
-		case 75:     
-			baud_rate = B75; 
-			break;
-		case 110:     
-			baud_rate = B110; 
-			break;
-		case 134:     
-			baud_rate = B134; 
-			break;
-		case 150:     
-			baud_rate = B150; 
-			break;
-		case 200:     
-			baud_rate = B200; 
-			break;
-		case 300:     
-			baud_rate = B300; 
-			break;
-		case 600:     
-			baud_rate = B600; 
-			break;
-		case 1200:     
-			baud_rate = B1200; 
-			break;
-		case 1800:     
-			baud_rate = B1800; 
-			break;
-		case 2400:     
-			baud_rate = B2400; 
-			break;
-		case 4800:     
-			baud_rate = B4800; 
-			break;
-		case 9600:     
-			baud_rate = B9600; 
-			break;
-		case 19200:     
-			baud_rate = B19200; 
-			break;
-		case 38400:     
-			baud_rate = B38400; 
-			break;
-		case 57600:     
-			baud_rate = B57600; 
-			break;
-		case 115200:     
-			baud_rate = B115200; 
-			break;
-		case 230400:     
-			baud_rate = B230400; 
-			break;
-		case 460800:     
-			baud_rate = B460800; 
-			break;
-		case 500000:     
-			baud_rate = B500000; 
-			break;
-		case 576000:     
-			baud_rate = B576000; 
-			break;
-		case 921600:     
-			baud_rate = B921600; 
-			break;
-		case 1000000:     
-			baud_rate = B1000000; 
-			break;
-		case 1152000:     
-			baud_rate = B1152000; 
-			break;
-		case 1500000:     
-			baud_rate = B1500000; 
-			break;
-		case 2000000:     
-			baud_rate = B2000000; 
-			break;
-		case 2500000:     
-			baud_rate = B2500000; 
-			break;
-		case 3000000:     
-			baud_rate = B3000000; 
-			break;
-		case 3500000:     
-			baud_rate = B3500000; 
-			break;
-		case 4000000:     
-			baud_rate = B4000000; 
-			break;
-		default:     
-			baud_rate = B9600;    
-			break;
-	}
+	/****************波特率选择****************/
+    baud_rate = check_speed_parameter(speed);
 	cfsetispeed(options, baud_rate);   
 	cfsetospeed(options, baud_rate);
 	return options;
