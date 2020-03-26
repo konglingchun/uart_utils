@@ -1,6 +1,10 @@
 #ifndef _BUFFER_QUEUE_H_
 #define _BUFFER_QUEUE_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define QUEUE_CHAR sizeof(char)
 #define QUEUE_INT sizeof(int)
 #define QUEUE_LONG sizeof(long)
@@ -70,5 +74,10 @@ int _buffer_queue_size_left(_buffer_queue_t *handler);
  * The index of the first element is 0
  */
 int _buffer_queue_ergodic_buffer(_buffer_queue_t *handler, void *data_arry, int start, int length);
+
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif
