@@ -1,10 +1,6 @@
 #ifndef _BUFFER_QUEUE_H_
 #define _BUFFER_QUEUE_H_
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #define QUEUE_CHAR sizeof(char)
 #define QUEUE_INT sizeof(int)
 #define QUEUE_LONG sizeof(long)
@@ -22,67 +18,57 @@ typedef struct {
 /*
  * 队列初始化
  */
-extern int _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size);
+int _buffer_queue_init(_buffer_queue_t *handler, int capacity, int data_size);
 
 /*
  * 清空队列
  */
-extern void _buffer_queue_empty(_buffer_queue_t *handler);
+void _buffer_queue_empty(_buffer_queue_t *handler);
 
 /*
  * 队列反初始化
  */
-extern void _buffer_queue_uninit(_buffer_queue_t *handler);
+void _buffer_queue_uninit(_buffer_queue_t *handler);
 
-/*
- * 向队列添加元素
- */
-extern int _buffer_queue_enqueue(_buffer_queue_t *handler, void *data);
 
 /*
  * 向队列添加元素，若队列已满会清出队头的元素
  */
-extern int _buffer_queue_enqueue_flush(_buffer_queue_t *handler, void *data);
+int _buffer_queue_enqueue(_buffer_queue_t *handler, void *data);
 
 /*
- * 向队列添加多个元素
+ * 向队列添加多个元素，若队列已满会清出队头的元素
  */
-extern int _buffer_queue_enqueue_multi(_buffer_queue_t *handler, void *data_arry, int arry_size);
+int _buffer_queue_enqueue_multi(_buffer_queue_t *handler, void *data_arry, int arry_size);
 
 /*
  * 清除队头的元素
  */
-extern void _buffer_queue_flush(_buffer_queue_t *handler, int size);
-
-/*
- * 清出队尾的元素
- */
-extern void _buffer_queue_delete(_buffer_queue_t *handler);
+void _buffer_queue_flush(_buffer_queue_t *handler, int size);
 
 /*
  * 从队列取出元素
  */
-extern int _buffer_queue_dequeue(_buffer_queue_t *handler, void *data);
+int _buffer_queue_dequeue(_buffer_queue_t *handler, void *data);
 
 /*
  * 从队列取出多个元素
  */
-extern int _buffer_queue_dequeue_multi(_buffer_queue_t *handler, void *data_arry, int arry_size);
+int _buffer_queue_dequeue_multi(_buffer_queue_t *handler, void *data_arry, int arry_size);
 
 /*
- * 队列元素大小
+ * 队列元素个数
  */
-extern int _buffer_queue_size(_buffer_queue_t *handler);
+int _buffer_queue_size(_buffer_queue_t *handler);
+
 /*
- * 队列剩余存放元素的空间的大小
+ * 队列剩余存放元素的空间的个数
  */
-extern int _buffer_queue_size_left(_buffer_queue_t *handler);
+int _buffer_queue_size_left(_buffer_queue_t *handler);
 
-//start from 0
-extern int _buffer_queue_ergodic_buffer(_buffer_queue_t *handler, void *data_arry, int start, int length);
-
-#ifdef  __cplusplus
-}
-#endif
+/*
+ * The index of the first element is 0
+ */
+int _buffer_queue_ergodic_buffer(_buffer_queue_t *handler, void *data_arry, int start, int length);
 
 #endif
